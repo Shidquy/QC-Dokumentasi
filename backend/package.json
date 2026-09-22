@@ -1,0 +1,25 @@
+{
+  "name": "qc-document-system",
+  "version": "1.0.0",
+  "description": "DQC System",
+  "main": "server.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "server": "node server.js"
+  },
+  "type": "module",
+  "dependencies": {
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "fs-extra": "^11.3.6",
+    "multer": "^2.2.0",
+    "mysql2": "^3.23.0",
+    "axios": "^1.7.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14"
+  }
+}
