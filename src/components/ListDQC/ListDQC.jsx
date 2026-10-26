@@ -1,5 +1,5 @@
 // src/components/ListDQC/ListDQC.jsx
-import { useState, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import MonitoringChart from '../Dashboard/MonitoringChart';
 import ProgressChart from '../Dashboard/ProgressChart';
@@ -72,7 +72,7 @@ export default function ListDQC({
     let result = documents;
     if (searchTerm.trim()) {
       const term = searchTerm.trim().toLowerCase();
-      result = result.filter(doc => doc.name.toLowerCase().includes(term));
+      result = result.filter(doc => (doc.name || '').toLowerCase().includes(term));
     }
     if (filterCustomer) result = result.filter(doc => doc.customer === filterCustomer);
     if (filterStatus) result = result.filter(doc => doc.status === filterStatus);
@@ -102,20 +102,20 @@ export default function ListDQC({
       name: doc.name,
       customer: doc.customer,
       status: doc.status,
-      date: doc.date.slice(0, 16),
+      date: (doc.date || new Date().toISOString()).slice(0, 16),
     });
     setIsFormModalOpen(true);
   };
-  const handleSaveDocument = () => {
+  const handleSaveDocument = async () => {
     if (!formData.name.trim()) {
       showToast('Part number wajib diisi!', 'error');
       return;
     }
     if (editingDoc) {
-      updateDocument(editingDoc.id, { ...formData, name: formData.name.trim() });
+      await updateDocument(editingDoc.id, { ...formData, name: formData.name.trim() });
       showToast(`Part "${formData.name}" berhasil diperbarui!`, 'success');
     } else {
-      addDocument({ ...formData, name: formData.name.trim() });
+      await addDocument({ ...formData, name: formData.name.trim() });
       showToast(`Part "${formData.name}" berhasil ditambahkan!`, 'success');
     }
     setIsFormModalOpen(false);
@@ -125,10 +125,10 @@ export default function ListDQC({
     setDeleteTargetId(id);
     setIsDeleteModalOpen(true);
   };
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = async () => {
     if (deleteTargetId) {
       const doc = documents.find(d => d.id === deleteTargetId);
-      deleteDocument(deleteTargetId);
+      await deleteDocument(deleteTargetId);
       showToast(`Part "${doc?.name || ''}" berhasil dihapus!`, 'success');
       setIsDeleteModalOpen(false);
       setDeleteTargetId(null);
@@ -136,12 +136,14 @@ export default function ListDQC({
   };
 
   const formatDate = (dateStr) => {
+    if (!dateStr) return '-';
     const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return '-';
     return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }).replace(',', '');
   };
 
   const uniqueStatuses = useMemo(() => {
-    const statusSet = new Set(documents.map(doc => doc.status));
+    const statusSet = new Set(documents.map(doc => doc.status).filter(Boolean));
     return Array.from(statusSet);
   }, [documents]);
 
@@ -233,7 +235,7 @@ export default function ListDQC({
         </div>
       </div>
 
-      {/* Bagian tabel List Part (seperti sebelumnya) */}
+      {/* Bagian tabel List Part */}
       <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm p-6 border border-slate-200/80 dark:border-slate-700">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
           <h2 className="text-xl font-bold text-slate-800 dark:text-white flex items-center gap-2">
@@ -342,7 +344,7 @@ export default function ListDQC({
         </div>
       </div>
 
-      {/* Modal dan Toast (sama) */}
+      {/* Modal dan Toast */}
       {isFormModalOpen && (
         <div className="fixed inset-0 z-40 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm" onClick={e => { if (e.target === e.currentTarget) setIsFormModalOpen(false); }}>
           <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
@@ -362,21 +364,13 @@ export default function ListDQC({
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Aktivitas <span className="text-rose-500">*</span></label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Status <span className="text-rose-500">*</span></label>
                 <select value={formData.status} onChange={e => setFormData({ ...formData, status: e.target.value })} className="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/80 dark:bg-slate-700/50 dark:text-white text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-700 transition-all appearance-none cursor-pointer">
-                  {uniqueStatuses.length > 0 ? uniqueStatuses.map(s => <option key={s} value={s}>{s}</option>) : (
-                    <>
-                      <option value="IRD dan IS">IRD dan IS</option>
-                      <option value="IRD">IRD</option>
-                      <option value="Check Sheet Monthly">Check Sheet Monthly</option>
-                      <option value="Inspection Results">Inspection Results</option>
-                      <option value="Data D90H/D40G/MARU J">Data D90H/D40G/MARU J</option>
-                    </>
-                  )}
+                  {STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Tanggal Update <span className="text-rose-500">*</span></label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Tanggal</label>
                 <input type="datetime-local" value={formData.date} onChange={e => setFormData({ ...formData, date: e.target.value })} className="w-full px-4 py-2.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/80 dark:bg-slate-700/50 dark:text-white text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-700 transition-all" />
               </div>
             </div>

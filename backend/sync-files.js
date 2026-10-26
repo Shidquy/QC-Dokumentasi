@@ -2,13 +2,15 @@
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // ─── KONFIGURASI ──────────────────────────────────────
-// Ganti dengan path folder Anda
-const DATA_DIR = "D:/QCC/Data centralisasi dok";
+const DATA_DIR = process.env.DATA_DIR || "D:/QCC/Data centralisasi dok";
 const CUSTOMER_FILES_STORAGE_KEY = "qc_customer_files";
 const DEFAULT_FOLDERS = ["DRAWING", "PIS", "QCPC", "CS"];
 
@@ -26,7 +28,7 @@ function scanFiles(dir) {
     .filter((d) => d.isDirectory())
     .map((d) => d.name);
 
-  console.log(`📂 Ditemukan ${customers.length} customer:`);
+  console.log(`Ditemukan ${customers.length} customer:`);
   console.log(customers);
 
   customers.forEach((customer) => {
@@ -38,7 +40,7 @@ function scanFiles(dir) {
       .filter((d) => d.isDirectory())
       .map((d) => d.name);
 
-    console.log(`  📁 ${customer}: ${folders.length} folder`);
+    console.log(`  ${customer}: ${folders.length} folder`);
 
     folders.forEach((folder) => {
       const folderPath = path.join(customerPath, folder);

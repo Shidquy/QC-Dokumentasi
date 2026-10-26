@@ -4,7 +4,6 @@ import { useAuth } from "../../contexts/AuthContext";
 import { useTheme } from "../../contexts/ThemeContext";
 
 // Import gambar (letakkan di src/assets/images/)
-// Atau bisa juga menggunakan URL langsung
 import loginImage from "../../assets/DSC00210-1536x864.jpg";
 
 export default function Login() {
@@ -15,19 +14,22 @@ export default function Login() {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
     setIsLoading(true);
 
-    // Simulasi delay login
-    setTimeout(() => {
-      const success = login(username, password);
-      if (!success) {
-        setError("Username atau password salah!");
-        setIsLoading(false);
+    try {
+      const result = await login(username, password);
+      const isSuccess = typeof result === "boolean" ? result : result?.success;
+      if (!isSuccess) {
+        setError(result?.error || "Username atau password salah!");
       }
-    }, 500);
+    } catch (err) {
+      setError(err?.message || "Terjadi kesalahan saat login!");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // Tentukan warna background berdasarkan theme
@@ -66,10 +68,6 @@ export default function Login() {
               dan dokumentasi part.
             </p>
             <div className="flex items-center gap-4 text-sm text-white/60">
-              <span className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 inline-block"></span>
-                Online
-              </span>
               <span className="w-px h-4 bg-white/20"></span>
               <span>v2.0</span>
               <span className="w-px h-4 bg-white/20"></span>
@@ -120,15 +118,12 @@ export default function Login() {
                   Username
                 </label>
                 <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500">
-                    👤
-                  </span>
                   <input
                     type="text"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                     placeholder="Masukkan username"
-                    className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/80 dark:bg-slate-700/50 dark:text-white text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-700 transition-all"
+                    className="w-full pl-6 pr-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/80 dark:bg-slate-700/50 dark:text-white text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-700 transition-all"
                     required
                   />
                 </div>
@@ -140,15 +135,12 @@ export default function Login() {
                   Password
                 </label>
                 <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500">
-                    🔒
-                  </span>
                   <input
                     type="password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Masukkan password"
-                    className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/80 dark:bg-slate-700/50 dark:text-white text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-700 transition-all"
+                    className="w-full pl-6 pr-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/80 dark:bg-slate-700/50 dark:text-white text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-700 transition-all"
                     required
                   />
                 </div>
@@ -167,32 +159,10 @@ export default function Login() {
                   </>
                 ) : (
                   <>
-                    <span>🚀</span>
                     Login
                   </>
                 )}
               </button>
-
-              {/* Informasi akun demo */}
-              <div className="mt-6 pt-4 border-t border-slate-200/80 dark:border-slate-700 text-center">
-                <p className="text-xs text-slate-400 dark:text-slate-500">
-                  🔑 <span className="font-medium">Demo Account</span>
-                </p>
-                <div className="flex justify-center gap-4 mt-1 text-xs">
-                  <span className="text-slate-500 dark:text-slate-400">
-                    Admin:{" "}
-                    <code className="bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 rounded text-blue-600 dark:text-blue-400">
-                      admin / admin123
-                    </code>
-                  </span>
-                  <span className="text-slate-500 dark:text-slate-400">
-                    Guest:{" "}
-                    <code className="bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 rounded text-emerald-600 dark:text-emerald-400">
-                      guest / guest123
-                    </code>
-                  </span>
-                </div>
-              </div>
             </form>
           </div>
 

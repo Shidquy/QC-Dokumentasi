@@ -1,0 +1,387 @@
+{
+  "info": {
+    "_postman_id": "a9b1c2d3-e4f5-4789-9abc-qc-dokumentasi",
+    "name": "QC-Dokumentasi API",
+    "description": "Postman Collection standar PT Sanoh Indonesia untuk Sistem QC-Dokumentasi (DQC System). Mendukung autentikasi JWT, manajemen Part Monthly Documents, dan manajemen file fisik drawing customer.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "BaseURL",
+      "value": "http://127.0.0.1:5000",
+      "type": "default",
+      "description": "Local development server port 5000"
+    },
+    {
+      "key": "Production",
+      "value": "http://be-qc.ns1.sanoh.co.id",
+      "type": "default",
+      "description": "Production server"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "default",
+      "description": "Bearer token - otomatis terisi setelah Login"
+    }
+  ],
+  "item": [
+    {
+      "name": "🔐 Authentication",
+      "item": [
+        {
+          "name": "Login (Admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.code === 200 && res.data && res.data.token) {",
+                  "    pm.collectionVariables.set('token', res.data.token);",
+                  "    console.log('Token saved:', res.data.token.substring(0, 20) + '...');",
+                  "    pm.test('Login successful - token saved', () => pm.expect(res.code).to.eql(200));",
+                  "} else {",
+                  "    pm.test('Login failed', () => pm.expect(res.code).to.eql(200));",
+                  "    console.error('Login failed:', res.error || res.message);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json", "type": "text" },
+              { "key": "Content-Type", "value": "application/json", "type": "text" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"admin\",\n  \"password\": \"admin123\"\n}"
+            },
+            "url": {
+              "raw": "{{BaseURL}}/api/auth/login",
+              "host": ["{{BaseURL}}"],
+              "path": ["api", "auth", "login"]
+            },
+            "description": "Autentikasi akun admin ke sistem dan menyimpan JWT token ke variabel collection {{token}}."
+          }
+        },
+        {
+          "name": "Login (Guest)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.code === 200 && res.data && res.data.token) {",
+                  "    pm.collectionVariables.set('token', res.data.token);",
+                  "    console.log('Token saved:', res.data.token.substring(0, 20) + '...');",
+                  "    pm.test('Login successful - token saved', () => pm.expect(res.code).to.eql(200));",
+                  "} else {",
+                  "    pm.test('Login failed', () => pm.expect(res.code).to.eql(200));",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json", "type": "text" },
+              { "key": "Content-Type", "value": "application/json", "type": "text" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"guest\",\n  \"password\": \"guest123\"\n}"
+            },
+            "url": {
+              "raw": "{{BaseURL}}/api/auth/login",
+              "host": ["{{BaseURL}}"],
+              "path": ["api", "auth", "login"]
+            },
+            "description": "Autentikasi akun guest (read-only)."
+          }
+        },
+        {
+          "name": "Get Current User Profile",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }]
+            },
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json", "type": "text" }
+            ],
+            "url": {
+              "raw": "{{BaseURL}}/api/auth/me",
+              "host": ["{{BaseURL}}"],
+              "path": ["api", "auth", "me"]
+            },
+            "description": "Mendapatkan data profil user yang sedang login menggunakan Bearer token."
+          }
+        }
+      ]
+    },
+    {
+      "name": "📋 Part Monthly Documents",
+      "item": [
+        {
+          "name": "Get All Documents",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json", "type": "text" }
+            ],
+            "url": {
+              "raw": "{{BaseURL}}/api/documents?search=&customer=&status=",
+              "host": ["{{BaseURL}}"],
+              "path": ["api", "documents"],
+              "query": [
+                { "key": "search", "value": "737D", "description": "Pencarian nama part/dokumen", "disabled": true },
+                { "key": "customer", "value": "TMMIN", "description": "Filter berdasarkan customer", "disabled": true },
+                { "key": "status", "value": "Release", "description": "Filter status: Release, Proses, Review Status", "disabled": true }
+              ]
+            },
+            "description": "Mengambil seluruh daftar dokumen Part Monthly beserta filter opsional."
+          }
+        },
+        {
+          "name": "Get Document Stats",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json", "type": "text" }
+            ],
+            "url": {
+              "raw": "{{BaseURL}}/api/documents/stats",
+              "host": ["{{BaseURL}}"],
+              "path": ["api", "documents", "stats"]
+            },
+            "description": "Mengambil statistik total, status Release, Proses, dan Review Status untuk Dashboard charts."
+          }
+        },
+        {
+          "name": "Create Document",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json", "type": "text" },
+              { "key": "Content-Type", "value": "application/json", "type": "text" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"737D_SAMPLE_PART-01\",\n  \"customer\": \"TMMIN\",\n  \"status\": \"Proses\",\n  \"date\": \"2026-10-26T00:00:00.000Z\"\n}"
+            },
+            "url": {
+              "raw": "{{BaseURL}}/api/documents",
+              "host": ["{{BaseURL}}"],
+              "path": ["api", "documents"]
+            },
+            "description": "Menambahkan dokumen Part Monthly baru ke database."
+          }
+        },
+        {
+          "name": "Update Document",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Accept", "value": "application/json", "type": "text" },
+              { "key": "Content-Type", "value": "application/json", "type": "text" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"737D_SAMPLE_PART-01\",\n  \"customer\": \"TMMIN\",\n  \"status\": \"Release\",\n  \"date\": \"2026-10-26T00:00:00.000Z\"\n}"
+            },
+            "url": {
+              "raw": "{{BaseURL}}/api/documents/doc1",
+              "host": ["{{BaseURL}}"],
+              "path": ["api", "documents", "doc1"]
+            },
+            "description": "Memperbarui data atau status dokumen Part Monthly."
+          }
+        },
+        {
+          "name": "Delete Document",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Accept", "value": "application/json", "type": "text" }
+            ],
+            "url": {
+              "raw": "{{BaseURL}}/api/documents/doc1",
+              "host": ["{{BaseURL}}"],
+              "path": ["api", "documents", "doc1"]
+            },
+            "description": "Menghapus dokumen Part Monthly berdasarkan ID dari database."
+          }
+        }
+      ]
+    },
+    {
+      "name": "📂 Customer Folders & Files",
+      "item": [
+        {
+          "name": "Get All Folders and Files",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json", "type": "text" }
+            ],
+            "url": {
+              "raw": "{{BaseURL}}/api/folders",
+              "host": ["{{BaseURL}}"],
+              "path": ["api", "folders"]
+            },
+            "description": "Mengambil semua folder dan file yang dikelompokkan berdasarkan customer untuk halaman Customer Detail."
+          }
+        },
+        {
+          "name": "Create Folder",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json", "type": "text" },
+              { "key": "Content-Type", "value": "application/json", "type": "text" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customer\": \"TMMIN\",\n  \"folderName\": \"PROJECT_2026\"\n}"
+            },
+            "url": {
+              "raw": "{{BaseURL}}/api/folders",
+              "host": ["{{BaseURL}}"],
+              "path": ["api", "folders"]
+            },
+            "description": "Membuat folder baru untuk customer di database dan disk server."
+          }
+        },
+        {
+          "name": "Rename Folder",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Accept", "value": "application/json", "type": "text" },
+              { "key": "Content-Type", "value": "application/json", "type": "text" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customer\": \"TMMIN\",\n  \"oldName\": \"PROJECT_2026\",\n  \"newName\": \"PROJECT_2026_REVISED\"\n}"
+            },
+            "url": {
+              "raw": "{{BaseURL}}/api/folders/rename",
+              "host": ["{{BaseURL}}"],
+              "path": ["api", "folders", "rename"]
+            },
+            "description": "Mengubah nama folder custom untuk customer tertentu (folder default tidak dapat diganti namanya)."
+          }
+        },
+        {
+          "name": "Delete Folder",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Accept", "value": "application/json", "type": "text" },
+              { "key": "Content-Type", "value": "application/json", "type": "text" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customer\": \"TMMIN\",\n  \"folder\": \"PROJECT_2026_REVISED\"\n}"
+            },
+            "url": {
+              "raw": "{{BaseURL}}/api/folders",
+              "host": ["{{BaseURL}}"],
+              "path": ["api", "folders"]
+            },
+            "description": "Menghapus folder beserta seluruh file fisik dan data di database secara cascade."
+          }
+        },
+        {
+          "name": "Upload File",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json", "type": "text" }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "customer", "value": "TMMIN", "type": "text" },
+                { "key": "folder", "value": "DRAWING", "type": "text" },
+                { "key": "docType", "value": "Drawing", "type": "text" },
+                { "key": "file", "type": "file", "src": "" }
+              ]
+            },
+            "url": {
+              "raw": "{{BaseURL}}/api/upload",
+              "host": ["{{BaseURL}}"],
+              "path": ["api", "upload"]
+            },
+            "description": "Mengunggah file drawing/dokumen QC ke server (disimpan di disk dan dicatat di database)."
+          }
+        },
+        {
+          "name": "Delete File",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Accept", "value": "application/json", "type": "text" },
+              { "key": "Content-Type", "value": "application/json", "type": "text" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fileUrl\": \"/uploads/TMMIN/DRAWING/sample-file.pdf\"\n}"
+            },
+            "url": {
+              "raw": "{{BaseURL}}/api/files",
+              "host": ["{{BaseURL}}"],
+              "path": ["api", "files"]
+            },
+            "description": "Menghapus file fisik dari server dan menghapus record metadata dari database."
+          }
+        },
+        {
+          "name": "Download File",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BaseURL}}/api/download?path=TMMIN/DRAWING/sample-file.pdf",
+              "host": ["{{BaseURL}}"],
+              "path": ["api", "download"],
+              "query": [
+                { "key": "path", "value": "TMMIN/DRAWING/sample-file.pdf", "description": "Relative path file di dalam upload folder" }
+              ]
+            },
+            "description": "Endpoint streaming download file dari server."
+          }
+        }
+      ]
+    },
+    {
+      "name": "🌐 System & Health",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json", "type": "text" }
+            ],
+            "url": {
+              "raw": "{{BaseURL}}/api/health",
+              "host": ["{{BaseURL}}"],
+              "path": ["api", "health"]
+            },
+            "description": "Cek status ketersediaan backend service."
+          }
+        }
+      ]
+    }
+  ]
+}
+

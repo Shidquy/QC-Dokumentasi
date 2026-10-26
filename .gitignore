@@ -29,6 +29,7 @@ backend/.env
 
 # Runtime uploads
 backend/public/uploads/
+backend/uploads/
 
 # Generated files
 backend/sync-output.json

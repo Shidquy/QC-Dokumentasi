@@ -1,52 +1,97 @@
 // src/contexts/AuthContext.jsx
-import { createContext, useContext, useState, useEffect } from "react";
-import { AUTH_STORAGE_KEY } from "../utils/constants";
+import { createContext, useContext, useState, useEffect } from 'react';
+import axios from 'axios';
+import { AUTH_STORAGE_KEY } from '../utils/constants';
 
 const AuthContext = createContext();
+const API_BASE_URL = 'http://localhost:5000';
+const TOKEN_KEY = 'qc_auth_token';
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // ─── DEVELOPMENT: reset auth setiap load ──
-    if (import.meta.env.DEV) {
-      localStorage.removeItem(AUTH_STORAGE_KEY);
-      setUser(null);
-      setLoading(false);
-      return;
-    }
+    const checkAuth = async () => {
+      const token = localStorage.getItem(TOKEN_KEY);
+      const storedUser = localStorage.getItem(AUTH_STORAGE_KEY);
 
-    // ─── PRODUCTION: ambil dari localStorage ──
-    const stored = localStorage.getItem(AUTH_STORAGE_KEY);
-    if (stored) {
-      try {
-        setUser(JSON.parse(stored));
-      } catch {
-        setUser(null);
+      if (token) {
+        try {
+          const res = await axios.get(`${API_BASE_URL}/api/auth/me`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          if (res.data?.success && res.data.data) {
+            setUser(res.data.data);
+            setLoading(false);
+            return;
+          }
+        } catch {
+          // Token expired or server unreachable
+        }
       }
-    }
-    setLoading(false);
+
+      if (storedUser) {
+        try {
+          setUser(JSON.parse(storedUser));
+        } catch {
+          setUser(null);
+        }
+      }
+      setLoading(false);
+    };
+
+    checkAuth();
   }, []);
 
-  const login = (username, password) => {
-    if (username === "admin" && password === "admin123") {
-      const userData = { username, name: "Administrator", role: "admin" };
+  const login = async (username, password) => {
+    try {
+      const res = await axios.post(`${API_BASE_URL}/api/auth/login`, {
+        username,
+        password,
+      });
+
+      if (res.data?.success && res.data.data) {
+        const { token, user: loggedUser } = res.data.data;
+        localStorage.setItem(TOKEN_KEY, token);
+        localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(loggedUser));
+        setUser(loggedUser);
+        return { success: true };
+      }
+    } catch (err) {
+      // Jika server merespon dengan error 400/401 (kredensial salah)
+      if (err.response && (err.response.status === 401 || err.response.status === 400)) {
+        return {
+          success: false,
+          error: err.response.data?.error || 'Username atau password salah!',
+        };
+      }
+      console.warn('API backend tidak merespons, mencoba fallback kredensial lokal:', err.message);
+    }
+
+    // Fallback offline credentials (jika backend tidak aktif/terkoneksi)
+    if (username === 'admin' && password === 'admin123') {
+      const userData = { username, name: 'Administrator', role: 'admin' };
       localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(userData));
       setUser(userData);
-      return true;
+      return { success: true };
     }
-    if (username === "guest" && password === "guest123") {
-      const userData = { username, name: "Guest", role: "guest" };
+    if (username === 'guest' && password === 'guest123') {
+      const userData = { username, name: 'Guest', role: 'guest' };
       localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(userData));
       setUser(userData);
-      return true;
+      return { success: true };
     }
-    return false;
+
+    return {
+      success: false,
+      error: 'Username atau password salah!',
+    };
   };
 
   const logout = () => {
     localStorage.removeItem(AUTH_STORAGE_KEY);
+    localStorage.removeItem(TOKEN_KEY);
     setUser(null);
   };
 
@@ -60,7 +105,7 @@ export function AuthProvider({ children }) {
 export function useAuth() {
   const context = useContext(AuthContext);
   if (!context) {
-    throw new Error("useAuth must be used within AuthProvider");
+    throw new Error('useAuth must be used within AuthProvider');
   }
   return context;
 }

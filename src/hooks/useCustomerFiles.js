@@ -1,12 +1,9 @@
 // src/hooks/useCustomerFiles.js
-import { useState, useEffect } from "react";
-import {
-  getInitialCustomerFiles,
-  CUSTOMER_FILES_STORAGE_KEY,
-} from "../utils/constants";
-import axios from "axios";
+import { useState, useEffect, useCallback } from 'react';
+import { getInitialCustomerFiles, CUSTOMER_FILES_STORAGE_KEY } from '../utils/constants';
+import axios from 'axios';
 
-const API_BASE_URL = "http://localhost:5000";
+const API_BASE_URL = 'http://localhost:5000';
 
 export function useCustomerFiles() {
   const [customerFiles, setCustomerFiles] = useState(() => {
@@ -20,13 +17,27 @@ export function useCustomerFiles() {
     }
     return getInitialCustomerFiles();
   });
+  const [loading, setLoading] = useState(false);
+
+  // Fetch dari database MySQL melalui API backend
+  const fetchFoldersAndFiles = useCallback(async () => {
+    try {
+      setLoading(true);
+      const res = await axios.get(`${API_BASE_URL}/api/folders`);
+      if (res.data?.success && res.data.data) {
+        setCustomerFiles(res.data.data);
+        localStorage.setItem(CUSTOMER_FILES_STORAGE_KEY, JSON.stringify(res.data.data));
+      }
+    } catch (err) {
+      console.warn('⚠️ Tidak dapat mengambil data customer files dari backend, menggunakan data lokal/cache:', err.message);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    localStorage.setItem(
-      CUSTOMER_FILES_STORAGE_KEY,
-      JSON.stringify(customerFiles),
-    );
-  }, [customerFiles]);
+    fetchFoldersAndFiles();
+  }, [fetchFoldersAndFiles]);
 
   const getFolders = (customer) => {
     return customerFiles[customer] || [];
@@ -38,130 +49,163 @@ export function useCustomerFiles() {
     return folder ? folder.files : [];
   };
 
-  const addFolder = (customer, folderName) => {
+  const addFolder = async (customer, folderName) => {
     if (!customer || !folderName.trim()) return;
+    const cleanName = folderName.trim();
     const folders = getFolders(customer);
-    if (
-      folders.some(
-        (f) => f.name.toLowerCase() === folderName.trim().toLowerCase(),
-      )
-    ) {
-      alert("Folder dengan nama tersebut sudah ada!");
+
+    if (folders.some((f) => f.name.toLowerCase() === cleanName.toLowerCase())) {
+      alert('Folder dengan nama tersebut sudah ada!');
       return;
     }
-    const newFolder = {
-      id: `${customer}_${folderName.trim()}_${Date.now()}`,
-      name: folderName.trim(),
+
+    try {
+      const res = await axios.post(`${API_BASE_URL}/api/folders`, {
+        customer,
+        folderName: cleanName,
+      });
+
+      if (res.data?.success && res.data.data) {
+        const newFolder = res.data.data;
+        setCustomerFiles((prev) => ({
+          ...prev,
+          [customer]: [...(prev[customer] || []), newFolder],
+        }));
+        return;
+      }
+    } catch (err) {
+      console.error('Gagal membuat folder di server:', err);
+    }
+
+    // Fallback lokal jika backend tidak terhubung
+    const fallbackFolder = {
+      id: `${customer}_${cleanName}_${Date.now()}`,
+      name: cleanName,
       files: [],
     };
     setCustomerFiles((prev) => ({
       ...prev,
-      [customer]: [...(prev[customer] || []), newFolder],
+      [customer]: [...(prev[customer] || []), fallbackFolder],
     }));
   };
 
-  // ─── ADD FILE ──────────────────────────────────────
   const addFile = (customer, folderName, fileData) => {
     if (!customer || !folderName || !fileData) return;
     const folders = getFolders(customer);
     const folderIndex = folders.findIndex((f) => f.name === folderName);
     if (folderIndex === -1) {
-      alert("Folder tidak ditemukan!");
+      alert('Folder tidak ditemukan!');
       return;
     }
+
     const newFile = {
-      id: `${customer}_${folderName}_${Date.now()}`,
+      id: fileData.id || `${customer}_${folderName}_${Date.now()}`,
       name: fileData.name,
-      type: fileData.type || "pdf",
-      size: fileData.size || "0.5 MB",
-      date: new Date().toISOString().split("T")[0],
-      docType: fileData.docType || "Drawing",
-      url: fileData.url || "",
+      type: fileData.type || 'pdf',
+      size: fileData.size || '0.5 MB',
+      date: fileData.date || new Date().toISOString().split('T')[0],
+      docType: fileData.docType || 'Drawing',
+      url: fileData.url || '',
     };
+
     setCustomerFiles((prev) => {
       const updated = { ...prev };
       const foldersCopy = [...(updated[customer] || [])];
       foldersCopy[folderIndex] = {
         ...foldersCopy[folderIndex],
-        files: [...foldersCopy[folderIndex].files, newFile],
+        files: [newFile, ...(foldersCopy[folderIndex].files || [])],
       };
       updated[customer] = foldersCopy;
+      localStorage.setItem(CUSTOMER_FILES_STORAGE_KEY, JSON.stringify(updated));
       return updated;
     });
   };
 
-  // ─── DELETE FILE (HAPUS METADATA + FILE FISIK) ───
   const deleteFile = async (customer, folderName, fileId) => {
     if (!customer || !folderName || !fileId) return;
 
-    // Cari file di state untuk mendapatkan URL
     const folders = getFolders(customer);
     const folder = folders.find((f) => f.name === folderName);
     const file = folder?.files.find((f) => f.id === fileId);
 
-    if (file && file.url) {
-      try {
-        // Kirim request delete ke server untuk menghapus file fisik
-        await axios.delete(`${API_BASE_URL}/api/files`, {
-          data: { fileUrl: file.url },
-        });
-        console.log("✅ File fisik dihapus dari server");
-      } catch (error) {
-        console.error("❌ Gagal hapus file fisik:", error);
-        // Tetap lanjutkan untuk menghapus metadata
-      }
+    try {
+      await axios.delete(`${API_BASE_URL}/api/files`, {
+        data: {
+          fileId,
+          fileUrl: file?.url,
+          customer,
+          folder,
+          fileName: file?.name,
+        },
+      });
+      console.log('✅ File fisik dan metadata berhasil dihapus dari server');
+    } catch (error) {
+      console.error('❌ Gagal hapus file di server:', error);
     }
 
-    // Hapus metadata dari localStorage
     setCustomerFiles((prev) => {
       const updated = { ...prev };
-      const folders = [...(updated[customer] || [])];
-      const folderIndex = folders.findIndex((f) => f.name === folderName);
+      const foldersCopy = [...(updated[customer] || [])];
+      const folderIndex = foldersCopy.findIndex((f) => f.name === folderName);
       if (folderIndex === -1) return prev;
-      folders[folderIndex] = {
-        ...folders[folderIndex],
-        files: folders[folderIndex].files.filter((f) => f.id !== fileId),
+      foldersCopy[folderIndex] = {
+        ...foldersCopy[folderIndex],
+        files: foldersCopy[folderIndex].files.filter((f) => f.id !== fileId),
       };
-      updated[customer] = folders;
+      updated[customer] = foldersCopy;
+      localStorage.setItem(CUSTOMER_FILES_STORAGE_KEY, JSON.stringify(updated));
       return updated;
     });
   };
 
-  // ─── DELETE FOLDER ─────────────────────────────────
   const deleteFolder = async (customer, folderName) => {
     if (!customer || !folderName) return;
-    const defaultFolders = ["DRAWING", "PIS", "QCPC", "CS"];
+    const defaultFolders = ['DRAWING', 'PIS', 'QCPC', 'CS'];
     if (defaultFolders.includes(folderName.toUpperCase())) {
-      alert("Tidak dapat menghapus folder default!");
+      alert('Tidak dapat menghapus folder default!');
       return;
     }
-    if (!window.confirm(`Hapus folder "${folderName}" beserta semua isinya?`))
-      return;
+    if (!window.confirm(`Hapus folder "${folderName}" beserta semua isinya?`)) return;
 
-    // Hapus folder fisik dari server
     try {
       await axios.delete(`${API_BASE_URL}/api/folders`, {
         data: { customer, folder: folderName },
       });
-      console.log("✅ Folder fisik dihapus dari server");
+      console.log('✅ Folder berhasil dihapus dari database dan server');
     } catch (error) {
-      console.error("❌ Gagal hapus folder fisik:", error);
+      console.error('❌ Gagal hapus folder di server:', error);
     }
 
-    // Hapus dari state
-    setCustomerFiles((prev) => ({
-      ...prev,
-      [customer]: (prev[customer] || []).filter((f) => f.name !== folderName),
-    }));
+    setCustomerFiles((prev) => {
+      const updated = {
+        ...prev,
+        [customer]: (prev[customer] || []).filter((f) => f.name !== folderName),
+      };
+      localStorage.setItem(CUSTOMER_FILES_STORAGE_KEY, JSON.stringify(updated));
+      return updated;
+    });
   };
 
-  const renameFolder = (customer, oldName, newName) => {
+  const renameFolder = async (customer, oldName, newName) => {
     if (!customer || !oldName || !newName.trim()) return;
-    const defaultFolders = ["DRAWING", "PIS", "QCPC", "CS"];
+    const cleanNewName = newName.trim();
+    const defaultFolders = ['DRAWING', 'PIS', 'QCPC', 'CS'];
     if (defaultFolders.includes(oldName.toUpperCase())) {
-      alert("Tidak dapat mengganti nama folder default!");
+      alert('Tidak dapat mengganti nama folder default!');
       return;
     }
+
+    try {
+      await axios.put(`${API_BASE_URL}/api/folders/rename`, {
+        customer,
+        oldName,
+        newName: cleanNewName,
+      });
+      console.log('✅ Folder berhasil di-rename di database');
+    } catch (error) {
+      console.error('❌ Gagal rename folder di server:', error);
+    }
+
     setCustomerFiles((prev) => {
       const updated = { ...prev };
       const folders = [...(updated[customer] || [])];
@@ -169,16 +213,18 @@ export function useCustomerFiles() {
       if (folderIndex === -1) return prev;
       folders[folderIndex] = {
         ...folders[folderIndex],
-        name: newName.trim(),
-        id: `${customer}_${newName.trim()}_${Date.now()}`,
+        name: cleanNewName,
+        id: `${customer}_${cleanNewName}_${Date.now()}`,
       };
       updated[customer] = folders;
+      localStorage.setItem(CUSTOMER_FILES_STORAGE_KEY, JSON.stringify(updated));
       return updated;
     });
   };
 
   return {
     customerFiles,
+    loading,
     getFolders,
     getFiles,
     addFolder,
@@ -187,5 +233,6 @@ export function useCustomerFiles() {
     deleteFolder,
     renameFolder,
     setCustomerFiles,
+    refreshCustomerFiles: fetchFoldersAndFiles,
   };
 }
