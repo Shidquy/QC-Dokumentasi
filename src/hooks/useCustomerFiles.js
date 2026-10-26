@@ -1,9 +1,8 @@
 // src/hooks/useCustomerFiles.js
 import { useState, useEffect, useCallback } from 'react';
 import { getInitialCustomerFiles, CUSTOMER_FILES_STORAGE_KEY } from '../utils/constants';
+import { API_BASE_URL } from '../utils/api';
 import axios from 'axios';
-
-const API_BASE_URL = 'http://localhost:5000';
 
 export function useCustomerFiles() {
   const [customerFiles, setCustomerFiles] = useState(() => {

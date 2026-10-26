@@ -49,9 +49,9 @@ app.get('/api/health', (req, res) => {
 // Centralized Error Handling Middleware
 app.use(errorHandler);
 
-// Start Server
-app.listen(PORT, async () => {
-  console.log(`🚀 Server berjalan di http://localhost:${PORT}`);
+// Start Server (Listen on 0.0.0.0 agar dapat diakses dari laptop/device lain di jaringan)
+app.listen(PORT, '0.0.0.0', async () => {
+  console.log(`🚀 Server berjalan di http://0.0.0.0:${PORT} (port ${PORT} terbuka untuk jaringan LAN/WiFi)`);
   console.log(`📁 Upload folder: ${uploadDir}`);
   await testConnection();
 });

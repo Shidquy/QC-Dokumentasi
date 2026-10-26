@@ -8,7 +8,7 @@ import { FaBuilding, FaEye } from "react-icons/fa";
 import axios from "axios";
 import * as XLSX from "xlsx";
 
-const API_BASE_URL = "http://localhost:5000";
+import { API_BASE_URL } from "../../utils/api";
 
 // ─── HELPER FUNCTIONS ──────────────────────────────
 const getFileType = (file) => {
@@ -220,7 +220,7 @@ export default function CustomerDetail({
 }) {
   const { user } = useAuth();
   const isAdmin = user?.role === "admin";
-  const { getFolders, addFolder, addFile, deleteFile, deleteFolder } =
+  const { getFolders, addFolder, addFile, deleteFile, deleteFolder, refreshCustomerFiles } =
     useCustomerFiles();
 
   // ─── STATE ──────────────────────────────────────────
@@ -476,6 +476,7 @@ export default function CustomerDetail({
       alert(`✅ Berhasil upload ${successCount} file ke "${folderName}"`);
     }
 
+    if (refreshCustomerFiles) { refreshCustomerFiles(); }
     setShowUploadModal(false);
     setUploadData({ folder: "", files: [], docType: "Drawing" });
   };

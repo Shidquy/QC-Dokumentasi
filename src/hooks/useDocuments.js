@@ -2,8 +2,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { INITIAL_DOCUMENTS, DOCUMENTS_STORAGE_KEY } from '../utils/constants';
-
-const API_BASE_URL = 'http://localhost:5000';
+import { API_BASE_URL } from '../utils/api';
 
 export function useDocuments() {
   const [documents, setDocuments] = useState(() => {

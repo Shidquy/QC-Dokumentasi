@@ -2,9 +2,9 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import axios from 'axios';
 import { AUTH_STORAGE_KEY } from '../utils/constants';
+import { API_BASE_URL } from '../utils/api';
 
 const AuthContext = createContext();
-const API_BASE_URL = 'http://localhost:5000';
 const TOKEN_KEY = 'qc_auth_token';
 
 export function AuthProvider({ children }) {
