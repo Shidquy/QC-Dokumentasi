@@ -259,7 +259,6 @@ export default function Dashboard({
       {/* ─── NOTIFIKASI PENCARIAN KOSONG ─────────────── */}
       {showNoResultToast && (
         <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 bg-amber-100 dark:bg-amber-900/80 border border-amber-300 dark:border-amber-700 text-amber-800 dark:text-amber-200 px-6 py-3 rounded-xl shadow-lg flex items-center gap-3 max-w-md animate-slide-down">
-          <span className="text-2xl">🔍</span>
           <div>
             <p className="font-medium">Dokumen Approval Tidak Tersedia</p>
             <p className="text-sm opacity-80">
@@ -283,7 +282,7 @@ export default function Dashboard({
           </span>
           <input
             type="text"
-            placeholder="🔍 Cari file di semua customer (nama file, folder, atau customer)..."
+            placeholder="Cari file di semua customer (nama file, folder, atau customer)..."
             value={globalSearch}
             onChange={(e) => setGlobalSearch(e.target.value)}
             onFocus={() => globalSearch.trim() && setIsGlobalSearchOpen(true)}
@@ -363,7 +362,7 @@ export default function Dashboard({
       {/* Customer / Department Grid - Full Width dengan Logo */}
       <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm p-5 border border-slate-200/80 dark:border-slate-700 mb-8">
         <h2 className="text-lg font-bold text-slate-800 dark:text-white mb-4 flex items-center gap-2">
-          <span>👥</span> Customer / Department
+          Customer / Department
         </h2>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
           {CUSTOMERS.map((customer) => (
@@ -386,7 +385,7 @@ export default function Dashboard({
         <div className="p-5 border-b border-slate-200/80 dark:border-slate-700 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h2 className="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2">
-              <span>📋</span> Dokumen Terbaru
+              Dokumen Terbaru
               <span className="ml-2 text-sm font-normal text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-700 px-2.5 py-0.5 rounded-full">
                 {filteredDocs.length}
               </span>
@@ -464,7 +463,6 @@ export default function Dashboard({
                     className="px-5 py-12 text-center text-slate-500 dark:text-slate-400"
                   >
                     <div className="flex flex-col items-center gap-2">
-                      <span className="text-4xl">📭</span>
                       <p className="font-medium">Tidak ada dokumen</p>
                       <p className="text-xs text-slate-400 dark:text-slate-500">
                         Ubah filter atau tambah dokumen baru di halaman List DQC

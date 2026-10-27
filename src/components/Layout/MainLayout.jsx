@@ -43,7 +43,7 @@ export default function MainLayout({ children, activeMenu, setActiveMenu }) {
         <header className="bg-white dark:bg-slate-800 border-b border-slate-200/80 dark:border-slate-700 px-4 sm:px-6 py-3 flex items-center justify-between flex-shrink-0">
           <div className="flex items-center gap-3">
             <h1 className="text-lg sm:text-xl font-bold text-slate-800 dark:text-white flex items-center gap-2">
-              <span>📄</span> Dokumen Quality Control
+               Dokumen Quality Control
             </h1>
           </div>
 

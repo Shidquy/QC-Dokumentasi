@@ -602,7 +602,6 @@ export default function CustomerDetail({
       {/* ─── POPUP NOTIFIKASI PENCARIAN KOSONG ───────── */}
       {showNoResultToast && (
         <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 bg-amber-100 dark:bg-amber-900/80 border border-amber-300 dark:border-amber-700 text-amber-800 dark:text-amber-200 px-6 py-3 rounded-xl shadow-lg flex items-center gap-3 max-w-md animate-slide-down">
-          <span className="text-2xl">📂</span>
           <div>
             <p className="font-medium">Dokumen Approval Tidak Tersedia</p>
             <p className="text-sm opacity-80">
@@ -622,7 +621,7 @@ export default function CustomerDetail({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div className="flex items-center gap-3 flex-wrap">
           <h1 className="text-2xl font-bold text-slate-800 dark:text-white flex items-center gap-2">
-            <span>🏢</span> <span>Detail Customer</span>
+            <span>Detail Customer</span>
           </h1>
           {/* ─── DROPDOWN CUSTOMER ──────────────────────────── */}
           <div className="flex items-center gap-2">
@@ -679,13 +678,13 @@ export default function CustomerDetail({
               onClick={() => setShowUploadModal(true)}
               className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-all shadow-sm hover:shadow-md"
             >
-              <IconUpload /> Upload File
+              Upload File
             </button>
             <button
               onClick={() => setShowAddFolderModal(true)}
               className="flex items-center gap-2 px-4 py-2.5 bg-emerald-600 text-white text-sm font-medium rounded-lg hover:bg-emerald-700 transition-all shadow-sm hover:shadow-md"
             >
-              <IconAddFolder /> Tambah Folder
+              Tambah Folder
             </button>
           </div>
         )}
@@ -697,7 +696,7 @@ export default function CustomerDetail({
           onClick={() => setFilterDocType("all")}
           className={getFilterButtonClass("all")}
         >
-          📂 Semua ({allFiles.length})
+          Semua ({allFiles.length})
         </button>
         {DOC_TYPES.map((type) => (
           <button
@@ -706,10 +705,10 @@ export default function CustomerDetail({
             className={getFilterButtonClass(type)}
           >
             <span className="mr-1">
-              {type === "Drawing" && "📐"}
-              {type === "PIS" && "📋"}
-              {type === "QCPC" && "📊"}
-              {type === "CS" && "📑"}
+              {type === "Drawing"}
+              {type === "PIS"}
+              {type === "QCPC"}
+              {type === "CS"}
             </span>
             {type} ({docTypeCounts[type] || 0})
           </button>
@@ -891,7 +890,6 @@ export default function CustomerDetail({
           <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] flex flex-col">
             <div className="flex items-center justify-between p-5 border-b border-slate-200/80 dark:border-slate-700 flex-shrink-0">
               <div className="flex items-center gap-3 min-w-0">
-                <span className="text-2xl">👁️</span>
                 <div className="truncate">
                   <h3 className="text-lg font-bold text-slate-800 dark:text-white truncate">
                     {previewFile.name}
@@ -1005,7 +1003,7 @@ export default function CustomerDetail({
                       download={previewFile.name}
                       className="mt-6 inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition shadow-sm"
                     >
-                      ⬇️ Download File
+                      Download File
                     </a>
                   </div>
                 );
@@ -1030,7 +1028,7 @@ export default function CustomerDetail({
                 download={previewFile.name}
                 className="px-5 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-all shadow-sm hover:shadow-md"
               >
-                ⬇️ Download
+                Download
               </a>
             </div>
           </div>
@@ -1048,7 +1046,7 @@ export default function CustomerDetail({
           <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl max-w-md w-full">
             <div className="flex items-center justify-between p-5 border-b border-slate-200/80 dark:border-slate-700">
               <h3 className="text-lg font-bold text-slate-800 dark:text-white">
-                📤 Upload File
+                Upload File
               </h3>
               <button
                 onClick={() => setShowUploadModal(false)}
@@ -1096,7 +1094,7 @@ export default function CustomerDetail({
                   )}
                 </select>
                 <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
-                  💡 Folder default (DRAWING, PIS, QCPC, CS) tidak muncul di
+                  Folder default (DRAWING, PIS, QCPC, CS) tidak muncul di
                   sini. Gunakan pilihan "Tipe Dokumen" untuk kategorisasi.
                 </p>
               </div>
@@ -1140,7 +1138,7 @@ export default function CustomerDetail({
                 />
                 {uploadData.files.length > 0 && (
                   <p className="mt-1 text-xs text-emerald-600 dark:text-emerald-400">
-                    ✅ {uploadData.files.length} file siap
+                    {uploadData.files.length} file siap
                   </p>
                 )}
               </div>
@@ -1196,7 +1194,7 @@ export default function CustomerDetail({
           <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl max-w-md w-full">
             <div className="flex items-center justify-between p-5 border-b border-slate-200/80 dark:border-slate-700">
               <h3 className="text-lg font-bold text-slate-800 dark:text-white">
-                📂 Tambah Folder Custom
+                Tambah Folder Custom
               </h3>
               <button
                 onClick={() => setShowAddFolderModal(false)}
