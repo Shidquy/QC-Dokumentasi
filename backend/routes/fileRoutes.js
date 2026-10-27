@@ -10,19 +10,21 @@ import {
   downloadFile,
 } from '../controllers/fileController.js';
 import { upload } from '../middlewares/uploadMiddleware.js';
+import { authenticateToken, requireDownloadAccess, requireAdmin } from '../middlewares/authMiddleware.js';
 
 const router = Router();
 
 // Folders
 router.get('/folders', getAllFoldersAndFiles);
-router.post('/folders', createFolder);
-router.put('/folders/rename', renameFolder);
-router.delete('/folders', deleteFolder);
+router.post('/folders', authenticateToken, requireAdmin, createFolder);
+router.put('/folders/rename', authenticateToken, requireAdmin, renameFolder);
+router.delete('/folders', authenticateToken, requireAdmin, deleteFolder);
 
 // Files
-router.post('/upload', upload.single('file'), handleFileUploadRecord);
-router.delete('/files', deleteFile);
-router.get('/download', downloadFile);
+router.post('/upload', authenticateToken, requireAdmin, upload.single('file'), handleFileUploadRecord);
+router.delete('/files', authenticateToken, requireAdmin, deleteFile);
+
+// Download - Hanya dapat diakses oleh user terautentikasi non-guest (Admin)
+router.get('/download', authenticateToken, requireDownloadAccess, downloadFile);
 
 export default router;
-

@@ -345,19 +345,24 @@
           }
         },
         {
-          "name": "Download File",
+          "name": "Download File [Admin]",
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }]
+            },
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{BaseURL}}/api/download?path=TMMIN/DRAWING/sample-file.pdf",
+              "raw": "{{BaseURL}}/api/download?path=TMMIN/DRAWING/sample-file.pdf&token={{token}}",
               "host": ["{{BaseURL}}"],
               "path": ["api", "download"],
               "query": [
-                { "key": "path", "value": "TMMIN/DRAWING/sample-file.pdf", "description": "Relative path file di dalam upload folder" }
+                { "key": "path", "value": "TMMIN/DRAWING/sample-file.pdf", "description": "Relative path file di dalam upload folder" },
+                { "key": "token", "value": "{{token}}", "description": "Token autentikasi jika diakses lewat browser/URL langsung", "disabled": true }
               ]
             },
-            "description": "Endpoint streaming download file dari server."
+            "description": "Endpoint streaming download file dari server. Memerlukan autentikasi akun non-guest (Admin). Akun dengan role Guest akan ditolak dengan status 403 Forbidden."
           }
         }
       ]

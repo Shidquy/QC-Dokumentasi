@@ -9,20 +9,22 @@ const TOKEN_KEY = 'qc_auth_token';
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
+  const [token, setToken] = useState(() => localStorage.getItem(TOKEN_KEY));
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const checkAuth = async () => {
-      const token = localStorage.getItem(TOKEN_KEY);
+      const storedToken = localStorage.getItem(TOKEN_KEY);
       const storedUser = localStorage.getItem(AUTH_STORAGE_KEY);
 
-      if (token) {
+      if (storedToken) {
         try {
           const res = await axios.get(`${API_BASE_URL}/api/auth/me`, {
-            headers: { Authorization: `Bearer ${token}` },
+            headers: { Authorization: `Bearer ${storedToken}` },
           });
           if (res.data?.success && res.data.data) {
             setUser(res.data.data);
+            setToken(storedToken);
             setLoading(false);
             return;
           }
@@ -52,10 +54,11 @@ export function AuthProvider({ children }) {
       });
 
       if (res.data?.success && res.data.data) {
-        const { token, user: loggedUser } = res.data.data;
-        localStorage.setItem(TOKEN_KEY, token);
+        const { token: receivedToken, user: loggedUser } = res.data.data;
+        localStorage.setItem(TOKEN_KEY, receivedToken);
         localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(loggedUser));
         setUser(loggedUser);
+        setToken(receivedToken);
         return { success: true };
       }
     } catch (err) {
@@ -93,10 +96,11 @@ export function AuthProvider({ children }) {
     localStorage.removeItem(AUTH_STORAGE_KEY);
     localStorage.removeItem(TOKEN_KEY);
     setUser(null);
+    setToken(null);
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, loading }}>
+    <AuthContext.Provider value={{ user, token, login, logout, loading }}>
       {children}
     </AuthContext.Provider>
   );

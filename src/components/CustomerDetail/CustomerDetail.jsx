@@ -30,7 +30,8 @@ const getDownloadUrl = (fileUrl) => {
   const idx = absoluteUrl.indexOf(marker);
   if (idx === -1) return absoluteUrl;
   const relativePath = absoluteUrl.slice(idx + marker.length);
-  return `${API_BASE_URL}/api/download?path=${encodeURIComponent(relativePath)}`;
+  const token = localStorage.getItem("qc_auth_token") || "";
+  return `${API_BASE_URL}/api/download?path=${encodeURIComponent(relativePath)}${token ? `&token=${encodeURIComponent(token)}` : ""}`;
 };
 
 // ─── ICONS ────────────────────────────────────────────
@@ -98,7 +99,7 @@ const DOC_TYPE_COLORS = {
 const DOC_TYPES = ["Drawing", "PIS", "QCPC", "CS"];
 
 // ─── KOMPONEN PREVIEW TIFF ──────────────────────────
-const TiffPreview = ({ fileUrl, fileName }) => {
+const TiffPreview = ({ fileUrl, fileName, isAdmin = false }) => {
   return (
     <div className="flex flex-col items-center justify-center min-h-[400px] p-8 text-center">
       <span className="text-6xl mb-4">🖼️</span>
@@ -111,19 +112,25 @@ const TiffPreview = ({ fileUrl, fileName }) => {
       <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
         Silakan download untuk melihat file.
       </p>
-      <a
-        href={getDownloadUrl(fileUrl)}
-        download={fileName}
-        className="mt-6 inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition shadow-sm"
-      >
-        ⬇️ Download File
-      </a>
+      {isAdmin ? (
+        <a
+          href={getDownloadUrl(fileUrl)}
+          download={fileName}
+          className="mt-6 inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition shadow-sm"
+        >
+          ⬇️ Download File
+        </a>
+      ) : (
+        <div className="mt-6 px-4 py-2.5 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300 text-xs rounded-xl inline-flex items-center gap-2">
+          <span>🔒</span> Akun Guest hanya memiliki hak akses lihat (tidak diizinkan mengunduh dokumen)
+        </div>
+      )}
     </div>
   );
 };
 
 // ─── KOMPONEN PREVIEW EXCEL ──────────────────────────
-const ExcelPreview = ({ fileUrl, fileName }) => {
+const ExcelPreview = ({ fileUrl, fileName, isAdmin = false }) => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -931,19 +938,13 @@ export default function CustomerDetail({
 
                 if (isTiff) {
                   return (
-                    <TiffPreview
-                      fileUrl={fileUrl}
-                      fileName={previewFile.name}
-                    />
+                    <TiffPreview fileUrl={fileUrl} fileName={previewFile.name} isAdmin={isAdmin} />
                   );
                 }
 
                 if (isExcel) {
                   return (
-                    <ExcelPreview
-                      fileUrl={fileUrl}
-                      fileName={previewFile.name}
-                    />
+                    <ExcelPreview fileUrl={fileUrl} fileName={previewFile.name} isAdmin={isAdmin} />
                   );
                 }
 
@@ -998,13 +999,19 @@ export default function CustomerDetail({
                       Preview tidak tersedia untuk tipe{" "}
                       <strong>{fileType || "unknown"}</strong>
                     </p>
-                    <a
-                      href={getDownloadUrl(fileUrl)}
-                      download={previewFile.name}
-                      className="mt-6 inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition shadow-sm"
-                    >
-                      Download File
-                    </a>
+                    {isAdmin ? (
+                      <a
+                        href={getDownloadUrl(fileUrl)}
+                        download={previewFile.name}
+                        className="mt-6 inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition shadow-sm"
+                      >
+                        Download File
+                      </a>
+                    ) : (
+                      <p className="mt-4 text-xs text-amber-600 dark:text-amber-400">
+                        🔒 Akun Guest tidak diizinkan mengunduh file
+                      </p>
+                    )}
                   </div>
                 );
               })()}
@@ -1017,19 +1024,21 @@ export default function CustomerDetail({
               >
                 Tutup
               </button>
-              <a
-                href={getDownloadUrl(
-                  getFileUrl(
-                    customer,
-                    previewFile.folderName,
-                    previewFile.name,
-                  ),
-                )}
-                download={previewFile.name}
-                className="px-5 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-all shadow-sm hover:shadow-md"
-              >
-                Download
-              </a>
+              {isAdmin && (
+                <a
+                  href={getDownloadUrl(
+                    getFileUrl(
+                      customer,
+                      previewFile.folderName,
+                      previewFile.name,
+                    ),
+                  )}
+                  download={previewFile.name}
+                  className="px-5 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-all shadow-sm hover:shadow-md"
+                >
+                  Download
+                </a>
+              )}
             </div>
           </div>
         </div>
